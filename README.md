@@ -66,8 +66,9 @@ You still can manually provide `locals` to pug with or without `langs` option. B
 ## i18next
 
 Plugin is using i18next as a translation function. Language filename must have next format `[language-code].json`, and the file structure is:
+
+`en.json`
 ```json
-// en.json
 {
     "hello": "Hello!"
 }
