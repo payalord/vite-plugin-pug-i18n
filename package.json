@@ -1,0 +1,57 @@
+{
+  "name": "vite-plugin-pug-i18n",
+  "version": "1.0.0",
+  "description": "Vite plugin to build static website with pug and i18n support",
+  "author": "Azat Ahmedov <payalord@gmail.com>",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.js"
+        },
+        "require": {
+          "types": "./dist/cjs/index.d.ts",
+          "default": "./dist/cjs/index.js"
+        }
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run build:esm && npm run build:commonjs",
+    "build:commonjs": "tsc -p tsconfig-cjs.json",
+    "build:esm": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "lint": "eslint --ext .ts ./src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/payalord/vite-plugin-pug-i18n.git"
+  },
+  "keywords": [
+    "vite",
+    "plugin",
+    "pug",
+    "jade",
+    "static",
+    "i18n",
+    "i18next"
+  ],
+  "devDependencies": {
+    "@types/node": "^18.15.11",
+    "@types/pug": "^2.0.6",
+    "@typescript-eslint/eslint-plugin": "^5.57.1",
+    "@typescript-eslint/parser": "^5.57.1",
+    "eslint": "^8.37.0",
+    "i18next": "^22.4.14",
+    "typescript": "^5.0.3"
+  },
+  "license": "MIT"
+}

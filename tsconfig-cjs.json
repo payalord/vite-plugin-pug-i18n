@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "commonjs",
+        "rootDir": "./src",
+        "baseUrl": "./",
+        "allowJs": true,
+        "checkJs": true,
+        "outDir": "./dist/cjs",
+        "removeComments": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noImplicitAny": false,
+        "noImplicitReturns": false,
+        "skipLibCheck": true,
+        "moduleResolution": "node",
+        "declaration": true
+    },
+    "include": ["src/**/*"],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
