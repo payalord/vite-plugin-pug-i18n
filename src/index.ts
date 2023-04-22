@@ -218,10 +218,14 @@ const vitePluginPugI18n = function ({pages, langs, locals, options}: PluginOptio
                 } else {
                     translate = i18next.getFixedT(langCode)
                 }
+
+                const translation = langMap.get(langCode)
     
                 return template({
+                    i18next,
                     __: translate,
                     lang: langCode,
+                    translation,
                     ...locals,
                 })
             } else {
