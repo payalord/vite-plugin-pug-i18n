@@ -1,3 +1,5 @@
+[![npm](https://img.shields.io/npm/v/vite-plugin-pug-i18n.svg)](https://www.npmjs.com/package/vite-plugin-pug-i18n) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/payalord/vite-plugin-pug-i18n/master/LICENSE)
+
 # Vite Plugin Pug I18n
 
 A vite plugin with support of rendering multiple pages based on pugjs templates. Plugin also support i18n with proper directory route structure creation.
