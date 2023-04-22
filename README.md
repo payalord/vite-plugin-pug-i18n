@@ -63,6 +63,21 @@ dist/test-route/test-page.html
 
 You still can manually provide `locals` to pug with or without `langs` option. But keep in mind that plugin reserved translation function name `__`(two underscores) in pug locals (that is how proper translation function is passed to pug), which can be overriden by your locals. Same true for reserved propert name `lang`.
 
+## Root redirect to language version
+
+There is no `index.html` in `dist` when the language mode is used. You can create it manually in vite's `public` directory, which will then be copied to `dist` during build. And add some redirect custom code to it. So it's up to developer which mechanism to use to detect user's language on client side(or server) and auto-redirect to proper url after.
+
+Root `index.html` example:
+```html
+<html>
+<body>
+<script>
+    window.location="/en";
+</script>
+</body>
+</html>
+```
+
 ## i18next
 
 Plugin is using i18next as a translation function. Language filename must have next format `[language-code].json`, and the file structure is:
@@ -90,3 +105,15 @@ script(type='module', src='src/main.js')
 ```
 
 Where `main.js` is normal ESMAScript that will be compiled by vite as asset. Within which you can import any `sass`, `scss`, `css` files.
+
+## Exposed PUG locals
+
+In a translation mode next locals exposed to pug:
+* i18next - plugin's working instance of i18next in case if it will be required to use it.
+* __ - translation function.
+* lang - current lang code.
+* translation - current language translation json object.
+
+## License
+
+[MIT License](LICENSE)
