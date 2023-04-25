@@ -85,7 +85,7 @@ const getFilelist = async (baseDir: string, ext = '.pug'): Promise<Array<string>
  * @param options PluginOptions
  * @returns object
  */
-const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOptions}: PluginOptions) {
+const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOptions = {}}: PluginOptions) {
     const langMap = new Map<string, string>()
     const langMetaMap = new Map<string, MetaPage>()
     const pageMap = new Map<string, pug.compileTemplate>()
