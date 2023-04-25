@@ -1,7 +1,7 @@
 import path from "path"
 import fs from "fs"
 import pug from "pug"
-import i18next from "i18next"
+import i18next, { InitOptions } from "i18next"
 
 /**
  * Pages options
@@ -35,7 +35,8 @@ interface PluginOptions {
     pages: PagesOptions,
     langs: LangsOptions | undefined,
     locals: object | undefined,
-    options: pug.Options | undefined
+    options: pug.Options | undefined,
+    i18nInitOptions: InitOptions
 }
 /**
  * A page interface to store lang code and page path for meta map data
@@ -84,7 +85,7 @@ const getFilelist = async (baseDir: string, ext = '.pug'): Promise<Array<string>
  * @param options PluginOptions
  * @returns object
  */
-const vitePluginPugI18n = function ({pages, langs, locals, options}: PluginOptions) {
+const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOptions}: PluginOptions) {
     const langMap = new Map<string, string>()
     const langMetaMap = new Map<string, MetaPage>()
     const pageMap = new Map<string, pug.compileTemplate>()
@@ -179,6 +180,7 @@ const vitePluginPugI18n = function ({pages, langs, locals, options}: PluginOptio
                     fallbackLng: langs.fallbackLng || langMap.keys()[0],
                     supportedLngs: [...langMap.keys()],
                     resources,
+                    ...i18nInitOptions
                 })    
             }
         },

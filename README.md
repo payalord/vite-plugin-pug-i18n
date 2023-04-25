@@ -19,6 +19,7 @@ Plugin Options is an object that expect's next properties:
     * fallbackLng - i18next fallback language option
 * locals - pug locals
 * options - pug options
+* i18nInitOptions - init options for i18next
 
 Note: `__` and `lang` are reserved locals. First is translation function that will be provided to pug, second is current language code. This locals are not provided if `langs` option are null or undefined.
 
@@ -44,6 +45,7 @@ export default defineConfig({
             },
             locals: {},
             options: {},
+            i18nInitOptions: {}
         })
     ]
 })
