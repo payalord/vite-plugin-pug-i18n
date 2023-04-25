@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-pug-i18n",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Vite plugin to build static website with pug and i18n support",
   "author": "Azat Ahmedov <payalord@gmail.com>",
   "type": "module",
@@ -42,15 +42,19 @@
     "jade",
     "static",
     "i18n",
-    "i18next"
+    "i18next",
+    "multipage"
   ],
+  "dependencies": {
+    "i18next": "^22.4.15",
+    "pug": "^3.0.2"
+  },
   "devDependencies": {
     "@types/node": "^18.15.11",
     "@types/pug": "^2.0.6",
     "@typescript-eslint/eslint-plugin": "^5.57.1",
     "@typescript-eslint/parser": "^5.57.1",
     "eslint": "^8.37.0",
-    "i18next": "^22.4.14",
     "typescript": "^5.0.3"
   },
   "license": "MIT"
