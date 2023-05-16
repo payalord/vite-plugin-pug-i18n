@@ -1,8 +1,8 @@
-[![npm](https://img.shields.io/npm/v/vite-plugin-pug-i18n.svg)](https://www.npmjs.com/package/vite-plugin-pug-i18n) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/payalord/vite-plugin-pug-i18n/master/LICENSE)
+[![npm](https://img.shields.io/npm/v/vite-plugin-pug-i18n.svg)](https://www.npmjs.com/package/vite-plugin-pug-i18n) [![GitHub license](https://img.shields.io/badge/license-MIT-green.svg)](https://raw.githubusercontent.com/payalord/vite-plugin-pug-i18n/master/LICENSE)
 
 # Vite Plugin Pug I18n
 
-A vite plugin with support of rendering multiple pages based on pugjs templates. Plugin also support i18n with proper directory route structure creation.
+A vite plugin with support of rendering multiple pages based on [pugjs](https://pugjs.org/) templates. Plugin also support i18n with proper directory route structure creation.
 
 ## Installation
 ```bash
@@ -11,22 +11,36 @@ npm i -D vite-plugin-pug-i18n
 
 ## Plugin Options
 Plugin Options is an object that expect's next properties:
-* pages - pages options
-    * baseDir - resolved path to pages directory
-* langs - (Optional) language options
-    * baseDir - resolved path to langs directory
-    * translate - a init function to provide translate function back. As an input this function will receive lang code
-    * fallbackLng - i18next fallback language option
-* locals - pug locals
-* options - pug options
-* i18nInitOptions - init options for i18next
+* pages - pages options.
+    * baseDir - resolved path to pages directory.
+* langs - (Optional) language options.
+    * baseDir - resolved path to langs directory.
+    * translate - a init function to provide translate function back. As an input this function will receive lang code.
+    * fallbackLng - i18next fallback language option.
+* locals - pug locals.
+* options - pug options.
+* i18nInitOptions - init options for i18next.
+* baseDir - base directory to put all the output files within.
 
 Note: `__` and `lang` are reserved locals. First is translation function that will be provided to pug, second is current language code. This locals are not provided if `langs` option are null or undefined.
 
 ## Usage example
 
-Let's assume you have your pug pages files in `src/pages` directory of your project. While language `.json` files are located in `src/language`. With 2 language available there - `en` and `fr`. Then you'll need to provide next options to the plugin:
+You can start with vite javascript template project. And just modify it.
 
+Let's assume you have your pug pages files in `src/pages` directory of your project:
+```bash
+src/pages/index.pug
+src/pages/test-route/test-page.pug
+```
+
+While language `.json` files are located in `src/language`. With 2 language available there - `en` and `fr`:
+```bash
+src/language/en.json
+src/language/fr.json
+```
+
+Then you'll need to provide next options to the plugin:
 ```javascript
 // vite.config.js
 
@@ -42,10 +56,7 @@ export default defineConfig({
             },
             langs: {
                 baseDir: resolve(__dirname, 'src/language')
-            },
-            locals: {},
-            options: {},
-            i18nInitOptions: {}
+            }
         })
     ]
 })
@@ -64,8 +75,6 @@ In case if `langs` option will not be provided or will be `null`, then static ht
 dist/index.html
 dist/test-route/test-page.html
 ```
-
-You still can manually provide `locals` to pug with or without `langs` option. But keep in mind that plugin reserved translation function name `__`(two underscores) in pug locals (that is how proper translation function is passed to pug), which can be overriden by your locals. Same true for reserved propert name `lang`.
 
 ## Root redirect to language version
 
@@ -112,11 +121,22 @@ Where `main.js` is normal ESMAScript that will be compiled by vite as asset. Wit
 
 ## Exposed PUG locals
 
-In a translation mode next locals exposed to pug:
+You still can manually provide `locals` to pug with or without `langs` option. But keep in mind that plugin reserved some exposed locals listed here, which can be overriden by your locals.
+
+Default locals exposed to pug:
+* base - plugin's baseDir value from configuration.
+* prefix - function to prefix properly website URLs.
+
+In a translation mode (when `langs` option provided) next additional locals exposed to pug:
 * i18next - plugin's working instance of i18next in case if it will be required to use it.
 * __ - translation function.
 * lang - current lang code.
 * translation - current language translation json object.
+
+## URL Prefix
+To prefix assets or any urls on your pages, you can provide vite's `base` shared configuration option. Exposed `prefix` function will use it to properly generate urls in pug. Another option is instead of using `base`, to use plugin's `baseDir` option. With this option vite will generate and output all the files within the `dist` + `baseDir` directory. While exposed `prefix` function will then properly prefix all the urls according to `baseDir` value.
+
+Another words `prefix` function works with both vite's `base` option and plugin's `baseDir`.
 
 ## License
 

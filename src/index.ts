@@ -17,6 +17,8 @@ type FallbackLng = string | Array<string> | object
 /**
  * Language options
  * @param baseDir string
+ * @param fallbackLng FallBackLng
+ * @param translate Translate
  */
 interface LangsOptions {
     baseDir: string,
@@ -30,13 +32,16 @@ interface LangsOptions {
  * @param langs LangsOptions
  * @param locals object
  * @param options object
+ * @param i18nInitOptions InitOptions
+ * @param baseDir string
  */
 interface PluginOptions {
     pages: PagesOptions,
     langs: LangsOptions | undefined,
     locals: object | undefined,
     options: pug.Options | undefined,
-    i18nInitOptions: InitOptions
+    i18nInitOptions: InitOptions,
+    baseDir: string
 }
 /**
  * A page interface to store lang code and page path for meta map data
@@ -85,7 +90,14 @@ const getFilelist = async (baseDir: string, ext = '.pug'): Promise<Array<string>
  * @param options PluginOptions
  * @returns object
  */
-const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOptions = {}}: PluginOptions) {
+const vitePluginPugI18n = function ({
+    pages,
+    langs,
+    locals,
+    options,
+    i18nInitOptions = {},
+    baseDir = ''
+}: PluginOptions) {
     const langMap = new Map<string, string>()
     const langMetaMap = new Map<string, MetaPage>()
     const pageMap = new Map<string, pug.compileTemplate>()
@@ -94,6 +106,8 @@ const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOpti
     let pagesFound: Array<string> = []
 
     let root = ''
+    let basePath = ''
+    let prefix = ''
 
     const loadLang = async (lang: string) => {
         const langCode = path.basename(lang, ".json")
@@ -110,16 +124,46 @@ const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOpti
         pagesFound = await getFilelist(pages.baseDir)
     }
 
+    const getDistPath = (baseDir: string, page: string, langCode = ''): string => {
+        const relativePath = path
+            .relative(baseDir, page)
+            .replace(/\.pug$/, ".html")
+        return langCode ? path.normalize(`${basePath}/${langCode}/${relativePath}`) : path.normalize(`${basePath}/${relativePath}`)
+    }
+
+    const normalizeBase = (b: string): string => {
+        return path.normalize(b).replace(/^(\/|\\)+/, '').replace(/\\+/g, '/')
+    }
+
+    const normalizeUrl = (b: string): string => {
+        return path.normalize(b)
+            .replace(/(\/|\\)+/g, '/')
+            .replace(/:\//, '://')
+            .replace(/^\/(.*):\/\//, '$1://')
+    }
+
+    const urlPrefix = (url: string): string => {
+        const localBase = prefix || basePath
+        return normalizeUrl(`/${localBase}/${url}`)
+    }
+
+    const getAssetFileNames = (userConfig) => {
+        const assetFileNames = userConfig.rollupOptions?.output?.assetFileNames
+        return assetFileNames ? normalizeBase(`${basePath}/${assetFileNames}`) : normalizeBase(`${basePath}/assets/[name]-[hash][extname]`)
+    }
+
+    const getChunkFileNames = (userConfig) => {
+        const chunkFileNames = userConfig.rollupOptions?.output?.chunkFileNames
+        return chunkFileNames ? normalizeBase(`${basePath}/${chunkFileNames}`) : normalizeBase(`${basePath}/assets/[name]-[hash].js`)
+    }
+
     const processPages = () => {
         const input = {}
         // inject entry files here
         for (const page of pagesFound) {
             if (langs) {
                 for (const langCode of langMap.keys()) {
-                    const relativePath = path
-                        .relative(pages.baseDir, page)
-                        .replace(/\.pug$/, ".html")
-                    const distPath = path.normalize(`${langCode}/${relativePath}`)
+                    const distPath = getDistPath(pages.baseDir, page, langCode)
                     input[distPath] = distPath
                     langMetaMap.set(distPath, {
                         langCode,
@@ -127,9 +171,7 @@ const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOpti
                     })
                 }
             } else {
-                const distPath = path
-                    .relative(pages.baseDir, page)
-                    .replace(/\.pug$/, ".html")
+                const distPath = getDistPath(pages.baseDir, page)
                 input[distPath] = distPath
                 langMetaMap.set(distPath, {
                     langCode: null,
@@ -145,7 +187,10 @@ const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOpti
         enforce: "pre",
         apply: "build",
 
-        async config() {
+        async config(userConfig) {
+            basePath = normalizeBase(baseDir)
+            prefix = userConfig.base
+
             if (langs) {
                 await Promise.all([loadPages(), loadLangs(langs)])
             } else {
@@ -155,9 +200,14 @@ const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOpti
             return {
                 build: {
                     rollupOptions: {
-                        input: processPages()
+                        input: processPages(),
+                        output: {
+                            assetFileNames: getAssetFileNames(userConfig),
+                            chunkFileNames: getChunkFileNames(userConfig)
+                        }
                     }
-                }
+                },
+                base: prefix && !baseDir ? prefix : '/'
             }
         },
 
@@ -181,7 +231,7 @@ const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOpti
                     supportedLngs: [...langMap.keys()],
                     resources,
                     ...i18nInitOptions
-                })    
+                })
             }
         },
 
@@ -228,10 +278,16 @@ const vitePluginPugI18n = function ({pages, langs, locals, options, i18nInitOpti
                     __: translate,
                     lang: langCode,
                     translation,
-                    ...locals,
+                    base: baseDir,
+                    prefix: urlPrefix,
+                    ...locals
                 })
             } else {
-                return template(locals || undefined)
+                return template({
+                    base: baseDir,
+                    prefix: urlPrefix,
+                    ...locals
+                })
             }
         }
     }
