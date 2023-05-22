@@ -148,12 +148,12 @@ const vitePluginPugI18n = function ({
     }
 
     const getAssetFileNames = (userConfig) => {
-        const assetFileNames = userConfig.rollupOptions?.output?.assetFileNames
+        const assetFileNames = userConfig.build?.rollupOptions?.output?.assetFileNames
         return assetFileNames ? normalizeBase(`${basePath}/${assetFileNames}`) : normalizeBase(`${basePath}/assets/[name]-[hash][extname]`)
     }
 
     const getChunkFileNames = (userConfig) => {
-        const chunkFileNames = userConfig.rollupOptions?.output?.chunkFileNames
+        const chunkFileNames = userConfig.build?.rollupOptions?.output?.chunkFileNames
         return chunkFileNames ? normalizeBase(`${basePath}/${chunkFileNames}`) : normalizeBase(`${basePath}/assets/[name]-[hash].js`)
     }
 
