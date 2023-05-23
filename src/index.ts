@@ -154,7 +154,7 @@ const vitePluginPugI18n = function ({
 
     const getChunkFileNames = (userConfig) => {
         const chunkFileNames = userConfig.build?.rollupOptions?.output?.chunkFileNames
-        return chunkFileNames ? normalizeBase(`${basePath}/${chunkFileNames}`) : normalizeBase(`${basePath}/assets/[name]-[hash].js`)
+        return chunkFileNames ? normalizeBase(`${basePath}/${chunkFileNames}`) : normalizeBase(`${basePath}/[name]-[hash].js`)
     }
 
     const processPages = () => {
