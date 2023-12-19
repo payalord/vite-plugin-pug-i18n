@@ -4,11 +4,24 @@ import pug from "pug"
 import i18next, { InitOptions } from "i18next"
 
 /**
+ * Page type is object as {slug: locals, template: '/templates/article.pug'} => {'/article-1': {content: 'The is an article content here in the body', title: 'Cool Article', keywords: '', meta: {}, footerContent: ''}}
+ */
+interface Page {
+    slug: string,
+    template: string | undefined,
+    content: {[langCode: string]: string} | string
+}
+type DynamicResolve = (pages: Array<Page> | Page) => void
+type DynamicNext = (index: number) => void
+type DynamicPages = (index: number, resolve: DynamicResolve, next: DynamicNext) => void | Promise<void>
+
+/**
  * Pages options
  * @param baseDir string
  */
 interface PagesOptions {
-    baseDir: string
+    baseDir: string,
+    dynamicPages: DynamicPages | Array<Page> | Page | false | undefined
 }
 
 type Translate = (langCode: string) => (a: string) => string
@@ -114,7 +127,7 @@ const vitePluginPugI18n = function ({
         const langJson = await fs.promises.readFile(lang, "utf-8")
         langMap.set(langCode, JSON.parse(langJson))
     }
-    
+
     const loadLangs = async (langs: LangsOptions) => {
         langsFound = await getFilelist(langs.baseDir, '.json')
         await Promise.all(langsFound.map(loadLang))
@@ -225,7 +238,7 @@ const vitePluginPugI18n = function ({
                         translation: langObject
                     }
                 }
-            
+
                 i18next.init({
                     fallbackLng: langs.fallbackLng || langMap.keys()[0],
                     supportedLngs: [...langMap.keys()],
@@ -272,7 +285,7 @@ const vitePluginPugI18n = function ({
                 }
 
                 const translation = langMap.get(langCode)
-    
+
                 return template({
                     i18next,
                     __: translate,
