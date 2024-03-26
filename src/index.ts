@@ -2,6 +2,8 @@ import path from "path"
 import fs from "fs"
 import pug from "pug"
 import i18next, { InitOptions } from "i18next"
+import { Plugin } from "vite"
+import { PluginContext } from "rollup"
 
 /**
  * Page type is object as {slug: locals, template: '/templates/article.pug'} => {'/article-1': {content: 'The is an article content here in the body', title: 'Cool Article', keywords: '', meta: {}, footerContent: ''}}
@@ -9,8 +11,9 @@ import i18next, { InitOptions } from "i18next"
 interface Page {
     slug: string,
     template: string | undefined,
-    content: {[langCode: string]: string} | string
+    content: {[langCode: string]: object | string} | string
 }
+
 type DynamicResolve = (pages: Array<Page> | Page) => void
 type DynamicNext = (index: number) => void
 type DynamicPages = (index: number, resolve: DynamicResolve, next: DynamicNext) => void | Promise<void>
@@ -21,6 +24,7 @@ type DynamicPages = (index: number, resolve: DynamicResolve, next: DynamicNext) 
  */
 interface PagesOptions {
     baseDir: string,
+    templateDir: string | undefined,
     dynamicPages: DynamicPages | Array<Page> | Page | false | undefined
 }
 
@@ -103,24 +107,28 @@ const getFilelist = async (baseDir: string, ext = '.pug'): Promise<Array<string>
  * @param options PluginOptions
  * @returns object
  */
-const vitePluginPugI18n = function ({
+const vitePluginPugI18n = function (this: PluginContext, {
     pages,
     langs,
     locals,
     options,
     i18nInitOptions = {},
     baseDir = ''
-}: PluginOptions) {
+}: PluginOptions): Plugin {
+    const context = this
     const langMap = new Map<string, string>()
     const langMetaMap = new Map<string, MetaPage>()
     const pageMap = new Map<string, pug.compileTemplate>()
+    const dynamicPageMap = new Map<string, Page>()
     let translate: (a: string) => string
     let langsFound: Array<string> = []
     let pagesFound: Array<string> = []
 
-    let root = ''
-    let basePath = ''
-    let prefix = ''
+    let root: string = ''
+    let basePath: string = ''
+    let prefix: string | undefined = ''
+    let batchIndex: number = 0
+    let continueFetching: boolean = true
 
     const loadLang = async (lang: string) => {
         const langCode = path.basename(lang, ".json")
@@ -195,6 +203,61 @@ const vitePluginPugI18n = function ({
         return input
     }
 
+    const dynamicResolve: DynamicResolve = (pages: Array<Page> | Page) => {
+        if (continueFetching) {
+            if (pages instanceof Array) {
+                pages.forEach((page, index) => {
+                    dynamicPageMap.set(`dynamic-data:${index}`, page)
+                    if (langs) {
+                        for (const langCode of langMap.keys()) {
+                            langMetaMap.set(`dynamic-data:${index}:${langCode}`, {
+                                langCode: langCode,
+                                page: `dynamic-data:${index}`
+                            })
+                        }
+                    } else {
+                        langMetaMap.set(`dynamic-data:${index}`, {
+                            langCode: null,
+                            page: `dynamic-data:${index}`
+                        })
+                    }
+                })
+            } else {
+                const index = dynamicPageMap.size
+                dynamicPageMap.set(`dynamic-data:${index}`, pages)
+                if (langs) {
+                    for (const langCode of langMap.keys()) {
+                        langMetaMap.set(`dynamic-data:${index}:${langCode}`, {
+                            langCode: langCode,
+                            page: `dynamic-data:${index}`
+                        })
+                    }
+                } else {
+                    langMetaMap.set(`dynamic-data:${index}`, {
+                        langCode: null,
+                        page: `dynamic-data:${index}`
+                    })
+                }
+            }
+        }
+    }
+
+    const dynamicNext: DynamicNext = (index: number | undefined) => {
+        batchIndex = index || batchIndex
+        dynamicPageMap.forEach((page, id) => {
+            for (const langCode of langMap.keys()) {1
+                const distPath = getDistPath(pages.baseDir, `${page.slug}.pug`, langCode)
+                this.emitFile({
+                    type: "chunk",
+                    id: `${id}:${langCode}`,
+                    fileName: `${distPath}`
+                })
+            }
+        })
+        batchIndex++
+        continueFetching = true
+    }
+
     return {
         name: "vite-plugin-pug-i18n",
         enforce: "pre",
@@ -263,8 +326,42 @@ const vitePluginPugI18n = function ({
             }
         },
 
+        async resolveDynamicImport(specifier, importer) {
+            // Resolve dynamic imports for the remaining items
+            if (specifier === 'dynamic-data:load' && continueFetching) {
+                return {
+                    id: 'dynamic-data:load',
+                }
+            }
+        },
+
         // Transform pug to html
         async load(id) {
+            if (pages.dynamicPages instanceof Function && continueFetching) {
+                continueFetching = false
+                pages.dynamicPages(batchIndex, dynamicResolve, dynamicNext)
+            }
+
+            if (id.startsWith('dynamic-data:') && langMetaMap.has(id)) {
+                const meta = langMetaMap.get(id)
+                if (!meta) {
+                    return
+                }
+
+                const { langCode, page } = meta
+
+                let template = pageMap.get(page)
+                if (!template) {
+                    const templateFilePath = page.template || pages.templateDir || 'templates/default.pug'
+                    const locals = page.content || {}
+                    template = pug.compileFile(getDynamicTemplate(templateFilePath), options)
+                    pageMap.set(page, template)
+                }
+
+                const template = page.template || pages.templateDir || 'templates/default.pug'
+                const locals = page.content || {}
+            }
+
             const meta = langMetaMap.get(id)
             if (!meta) {
                 return
