@@ -11,7 +11,7 @@ import { PluginContext } from "rollup"
 interface Page {
     slug: string,
     template: string | undefined,
-    content: {[langCode: string]: object | string} | string
+    content: string | object | Array<object>
 }
 
 type DynamicResolve = (pages: Array<Page> | Page) => void
@@ -203,6 +203,22 @@ const vitePluginPugI18n = function (this: PluginContext, {
         return input
     }
 
+    const getTemplatePath = (page: Page): string => {
+        if (page.template) {
+            const ext = path.extname(page.template)
+            page.template = ext === '' || ext === '.' ? `${page.template}.pug` : page.template
+            return path.resolve(root, pages.templateDir || 'src/templates', page.template)
+        }
+        return path.resolve(root, pages.templateDir || 'src/templates', 'default.pug')
+    }
+
+    const getDynamicLocals = (langCode: string, page: Page): object => {
+        if (page.content instanceof Array) {
+            return page.content[batchIndex]
+        }
+        return page.content
+    }
+
     const dynamicResolve: DynamicResolve = (pages: Array<Page> | Page) => {
         if (continueFetching) {
             if (pages instanceof Array) {
@@ -348,18 +364,20 @@ const vitePluginPugI18n = function (this: PluginContext, {
                     return
                 }
 
-                const { langCode, page } = meta
+                const { langCode, page: pageDynamicId } = meta
+                const page = dynamicPageMap.get(pageDynamicId)
 
-                let template = pageMap.get(page)
-                if (!template) {
-                    const templateFilePath = page.template || pages.templateDir || 'templates/default.pug'
-                    const locals = page.content || {}
-                    template = pug.compileFile(getDynamicTemplate(templateFilePath), options)
-                    pageMap.set(page, template)
+                if (!page) {
+                    return
                 }
 
-                const template = page.template || pages.templateDir || 'templates/default.pug'
-                const locals = page.content || {}
+                let template = pageMap.get(id)
+                if (!template) {
+                    const templateFilePath = getTemplatePath(page)
+                    const locals = getDynamicLocals(langCode, page.content)
+                    template = pug.compileFile(getDynamicTemplate(templateFilePath), options)
+                    pageMap.set(id, template)
+                }
             }
 
             const meta = langMetaMap.get(id)
