@@ -374,7 +374,7 @@ const vitePluginPugI18n = function (this: PluginContext, {
                 let template = pageMap.get(id)
                 if (!template) {
                     const templateFilePath = getTemplatePath(page)
-                    const locals = getDynamicLocals(langCode, page.content)
+                    const locals = getDynamicLocals(langCode || 'en', page.content)
                     template = pug.compileFile(getDynamicTemplate(templateFilePath), options)
                     pageMap.set(id, template)
                 }
