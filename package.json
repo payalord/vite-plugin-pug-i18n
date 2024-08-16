@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-pug-i18n",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "Vite plugin to build static website with pug and i18n support",
   "author": "Azat Ahmedov <payalord@gmail.com>",
   "type": "module",
@@ -29,7 +29,7 @@
     "build:commonjs": "tsc -p tsconfig-cjs.json",
     "build:esm": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "lint": "eslint --ext .ts ./src"
+    "lint": "eslint ./src"
   },
   "repository": {
     "type": "git",
@@ -46,16 +46,19 @@
     "multipage"
   ],
   "dependencies": {
-    "i18next": "^22.4.15",
-    "pug": "^3.0.2"
+    "i18next": "^23.12.2",
+    "pug": "^3.0.3"
   },
   "devDependencies": {
-    "@types/node": "^18.15.11",
-    "@types/pug": "^2.0.6",
-    "@typescript-eslint/eslint-plugin": "^5.57.1",
-    "@typescript-eslint/parser": "^5.57.1",
-    "eslint": "^8.37.0",
-    "typescript": "^5.0.3"
+    "@eslint/js": "^9.9.0",
+    "@types/eslint__js": "^8.42.3",
+    "@types/node": "^22.2.0",
+    "@types/pug": "^2.0.10",
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
+    "eslint": "^9.9.0",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.1.0",
+    "vite": "^5.4.0"
   },
   "license": "MIT"
 }

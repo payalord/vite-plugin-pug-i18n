@@ -2,6 +2,8 @@ import path from "path"
 import fs from "fs"
 import pug from "pug"
 import i18next, { InitOptions } from "i18next"
+import { Plugin } from "vite"
+import { PluginContext } from "rollup"
 
 /**
  * Pages options
@@ -90,14 +92,14 @@ const getFilelist = async (baseDir: string, ext = '.pug'): Promise<Array<string>
  * @param options PluginOptions
  * @returns object
  */
-const vitePluginPugI18n = function ({
+const vitePluginPugI18n = function (this: PluginContext, {
     pages,
     langs,
     locals,
     options,
     i18nInitOptions = {},
     baseDir = ''
-}: PluginOptions) {
+}: PluginOptions): Plugin {
     const langMap = new Map<string, string>()
     const langMetaMap = new Map<string, MetaPage>()
     const pageMap = new Map<string, pug.compileTemplate>()
@@ -107,14 +109,14 @@ const vitePluginPugI18n = function ({
 
     let root = ''
     let basePath = ''
-    let prefix = ''
+    let prefix: string | undefined = ''
 
     const loadLang = async (lang: string) => {
         const langCode = path.basename(lang, ".json")
         const langJson = await fs.promises.readFile(lang, "utf-8")
         langMap.set(langCode, JSON.parse(langJson))
     }
-    
+
     const loadLangs = async (langs: LangsOptions) => {
         langsFound = await getFilelist(langs.baseDir, '.json')
         await Promise.all(langsFound.map(loadLang))
@@ -149,12 +151,12 @@ const vitePluginPugI18n = function ({
 
     const getAssetFileNames = (userConfig) => {
         const assetFileNames = userConfig.build?.rollupOptions?.output?.assetFileNames
-        return assetFileNames ? normalizeBase(`${basePath}/${assetFileNames}`) : normalizeBase(`${basePath}/assets/[name]-[hash][extname]`)
+        return assetFileNames ? normalizeBase(`${basePath}/${assetFileNames}`) : normalizeBase(`${basePath}/assets/index-[hash][extname]`)
     }
 
-    const getChunkFileNames = (userConfig) => {
-        const chunkFileNames = userConfig.build?.rollupOptions?.output?.chunkFileNames
-        return chunkFileNames ? normalizeBase(`${basePath}/${chunkFileNames}`) : normalizeBase(`${basePath}/[name]-[hash].js`)
+    const getEntryFileNames = (userConfig) => {
+        const entryFileNames = userConfig.build?.rollupOptions?.output?.entryFileNames
+        return entryFileNames ? normalizeBase(`${basePath}/${entryFileNames}`) : normalizeBase(`${basePath}/assets/index-[hash].js`)
     }
 
     const processPages = () => {
@@ -203,7 +205,7 @@ const vitePluginPugI18n = function ({
                         input: processPages(),
                         output: {
                             assetFileNames: getAssetFileNames(userConfig),
-                            chunkFileNames: getChunkFileNames(userConfig)
+                            entryFileNames: getEntryFileNames(userConfig)
                         }
                     }
                 },
@@ -225,7 +227,7 @@ const vitePluginPugI18n = function ({
                         translation: langObject
                     }
                 }
-            
+
                 i18next.init({
                     fallbackLng: langs.fallbackLng || langMap.keys()[0],
                     supportedLngs: [...langMap.keys()],
@@ -272,7 +274,7 @@ const vitePluginPugI18n = function ({
                 }
 
                 const translation = langMap.get(langCode)
-    
+
                 return template({
                     i18next,
                     __: translate,
