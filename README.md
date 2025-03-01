@@ -49,6 +49,11 @@ import { resolve } from 'path'
 import vitePluginPugI18n from 'vite-plugin-pug-i18n'
 
 export default defineConfig({
+    resolve: {
+        alias: {
+            '@': resolve(__dirname, './src')
+        }
+    },
     plugins: [
         vitePluginPugI18n({
             pages: {
@@ -114,10 +119,12 @@ You can use `*.js` files in pug that will be processed as vite assets and proper
 ```pug
 // index.pug
 p #{__('hello')}
-script(type='module', src='src/main.js')
+script(type='module', src='@/main.js')
 ```
 
 Where `main.js` is normal ESMAScript that will be compiled by vite as asset. Within which you can import any `sass`, `scss`, `css` files.
+
+**NOTE:** Since vite 5.0.0 or 6.0.0 path resolution for `src` and similar attributes changed. Previously it was based on the root of the project. Now it is based on current compiled html file location in dist, which is wrong in our case and will break the build when in language mode. So to avoid this issue you need to use resolve alias with `@` symbol (please check vite config for how to setup resolve alias).
 
 ## Exposed PUG locals
 
